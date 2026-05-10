@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Award, BookOpen, TrendingUp, Users } from 'lucide-react';
+import { Award, BookOpen, TrendingUp, Users, ArrowRight, GraduationCap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
+import StatCard from '../../components/StatCard';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import type { Siswa, KelasSiswa, Kelas, Nilai } from '../../types';
@@ -46,66 +47,86 @@ export default function SiswaDashboard() {
     return 'Selamat Malam';
   };
 
+  const lulusRate = nilaiSummary.total
+    ? Math.round((nilaiSummary.lulus / nilaiSummary.total) * 100)
+    : 0;
+
   return (
     <Layout title="Dashboard Siswa" subtitle="Informasi akademik Anda">
       {loading ? (
-        <div className="space-y-4">
-          <div className="h-32 bg-gray-100 rounded-xl animate-pulse" />
-          <div className="grid grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />)}
+        <div className="space-y-6 animate-fade-in">
+          <div className="h-32 rounded-xl bg-surface-100 animate-pulse" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="card p-5 animate-pulse">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <div className="h-3.5 bg-surface-100 rounded w-20" />
+                    <div className="h-7 bg-surface-100 rounded w-12" />
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-surface-100" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       ) : (
-        <>
+        <div className="space-y-8 animate-fade-in">
           {/* Greeting banner */}
-          <div className="bg-gradient-to-r from-blue-700 to-blue-500 rounded-xl p-6 text-white shadow-md mb-6">
-            <p className="text-blue-200 text-sm">{greeting()},</p>
-            <h2 className="text-2xl font-bold mt-0.5">{siswaProfile?.nama ?? user?.nama}</h2>
-            {siswaProfile?.nis && <p className="text-blue-200 text-sm mt-1">NIS: {siswaProfile.nis}</p>}
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950 p-6 lg:p-8">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-600/20 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-500/10 rounded-full translate-y-1/2 -translate-x-1/4 blur-2xl" />
+            <div className="relative">
+              <p className="text-brand-200 text-sm font-medium">{greeting()},</p>
+              <h2 className="text-2xl font-bold text-white mt-0.5">{siswaProfile?.nama ?? user?.nama}</h2>
+              {siswaProfile?.nis && (
+                <p className="text-brand-200 text-sm mt-1">NIS: {siswaProfile.nis}</p>
+              )}
+            </div>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{nilaiSummary.total}</p>
-                <p className="text-sm text-gray-500">Mata Pelajaran</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{nilaiSummary.avg.toFixed(1)}</p>
-                <p className="text-sm text-gray-500">Rata-rata Nilai</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
-                <Award className="w-6 h-6 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{nilaiSummary.lulus}/{nilaiSummary.total}</p>
-                <p className="text-sm text-gray-500">Mapel Lulus (≥75)</p>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-slide-up">
+            <StatCard
+              label="Mata Pelajaran"
+              value={nilaiSummary.total}
+              icon={<BookOpen className="w-5 h-5" />}
+              color="text-brand-600"
+              bg="bg-brand-50"
+            />
+            <StatCard
+              label="Rata-rata Nilai"
+              value={nilaiSummary.avg.toFixed(1)}
+              icon={<TrendingUp className="w-5 h-5" />}
+              color="text-success-600"
+              bg="bg-success-50"
+            />
+            <StatCard
+              label="Mapel Lulus (>=75)"
+              value={`${nilaiSummary.lulus}/${nilaiSummary.total}`}
+              icon={<Award className="w-5 h-5" />}
+              color="text-warning-600"
+              bg="bg-warning-50"
+              trend={nilaiSummary.total > 0 ? { value: `${lulusRate}%`, up: lulusRate >= 75 } : undefined}
+            />
           </div>
 
           {/* Kelas info */}
           {kelas.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="w-4 h-4 text-gray-400" />
-                <h3 className="font-semibold text-gray-900 text-sm">Kelas Saya</h3>
+            <div className="card p-6 animate-slide-up">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-lg bg-surface-100 flex items-center justify-center">
+                  <Users className="w-4.5 h-4.5 text-surface-500" />
+                </div>
+                <h3 className="font-semibold text-surface-900 text-sm">Kelas Saya</h3>
               </div>
               <div className="flex flex-wrap gap-2">
                 {kelas.map(k => (
-                  <span key={k.id} className="inline-flex items-center gap-1.5 text-sm font-medium bg-blue-50 text-blue-700 rounded-lg px-3 py-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  <span
+                    key={k.id}
+                    className="inline-flex items-center gap-2 text-sm font-medium bg-brand-50 text-brand-700 rounded-lg px-3.5 py-2"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
                     {k.kelas?.nama_kelas} ({k.kelas?.tahun_ajaran})
                   </span>
                 ))}
@@ -113,14 +134,16 @@ export default function SiswaDashboard() {
             </div>
           )}
 
+          {/* CTA */}
           <button
             onClick={() => navigate('/siswa/nilai')}
-            className="w-full sm:w-auto flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-medium px-6 py-3 rounded-xl transition-colors shadow-sm"
+            className="btn-primary px-6 py-3 rounded-xl animate-slide-up"
           >
-            <Award className="w-5 h-5" />
+            <GraduationCap className="w-5 h-5" />
             Lihat Nilai Saya
+            <ArrowRight className="w-4 h-4" />
           </button>
-        </>
+        </div>
       )}
     </Layout>
   );

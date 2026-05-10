@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Save, RotateCcw } from 'lucide-react';
+import { Save, BookOpen, CheckCircle2, ChevronDown } from 'lucide-react';
 import Layout from '../../components/Layout';
 import EmptyState from '../../components/EmptyState';
 import { supabase } from '../../lib/supabase';
@@ -154,73 +154,97 @@ export default function KelolaNilai() {
 
   const selectedAsgn = assignments.find(a => a.id === selectedAssignment);
   const hasDirty = nilaiForms.some(f => f.dirty);
+  const dirtyCount = nilaiForms.filter(f => f.dirty).length;
 
   return (
     <Layout title="Kelola Nilai Siswa" subtitle="Input dan perbarui nilai siswa per kelas dan mata pelajaran">
-      <div className="space-y-5">
-        {/* Select assignment */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Pilih Kelas & Mata Pelajaran</label>
-          <select
-            value={selectedAssignment}
-            onChange={e => handleAssignChange(e.target.value)}
-            className="w-full max-w-md px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Pilih kelas dan mata pelajaran --</option>
-            {assignments.map(a => (
-              <option key={a.id} value={a.id}>{a.kelas?.nama_kelas} - {a.mapel?.nama_mapel}</option>
-            ))}
-          </select>
+      <div className="space-y-6 animate-fade-in">
+        {/* Assignment selector */}
+        <div className="card p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-lg bg-brand-50 flex items-center justify-center">
+              <BookOpen className="w-4.5 h-4.5 text-brand-600" />
+            </div>
+            <label className="text-sm font-semibold text-surface-900">Pilih Kelas & Mata Pelajaran</label>
+          </div>
+          <div className="relative max-w-md">
+            <select
+              value={selectedAssignment}
+              onChange={e => handleAssignChange(e.target.value)}
+              className="input appearance-none pr-10 cursor-pointer"
+            >
+              <option value="">-- Pilih kelas dan mata pelajaran --</option>
+              {assignments.map(a => (
+                <option key={a.id} value={a.id}>{a.kelas?.nama_kelas} - {a.mapel?.nama_mapel}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400 pointer-events-none" />
+          </div>
         </div>
 
         {selectedAssignment && (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="card overflow-hidden animate-slide-up">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-surface-100">
               <div>
-                <h3 className="font-semibold text-gray-900">{selectedAsgn?.kelas?.nama_kelas} — {selectedAsgn?.mapel?.nama_mapel}</h3>
-                <p className="text-xs text-gray-400 mt-0.5">Formula: Nilai Akhir = (40% × Tugas) + (30% × UTS) + (30% × UAS)</p>
+                <h3 className="font-semibold text-surface-900">
+                  {selectedAsgn?.kelas?.nama_kelas} — {selectedAsgn?.mapel?.nama_mapel}
+                </h3>
+                <p className="text-xs text-surface-400 mt-0.5">
+                  Formula: Nilai Akhir = (40% x Tugas) + (30% x UTS) + (30% x UAS)
+                </p>
               </div>
               {hasDirty && (
                 <button
                   onClick={handleSaveAll}
-                  className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                  className="btn-primary px-4 py-2.5"
                 >
                   <Save className="w-4 h-4" />
-                  Simpan Semua
+                  Simpan Semua{dirtyCount > 1 ? ` (${dirtyCount})` : ''}
                 </button>
               )}
             </div>
 
             {loading ? (
-              <div className="p-8 text-center text-sm text-gray-500">Memuat data siswa...</div>
+              <div className="p-12 text-center">
+                <div className="w-8 h-8 border-2 border-brand-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-sm text-surface-500">Memuat data siswa...</p>
+              </div>
             ) : nilaiForms.length === 0 ? (
               <EmptyState message="Belum ada siswa di kelas ini" description="Minta admin untuk menambahkan siswa ke kelas ini" />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100">
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide w-8">No</th>
-                      <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Siswa</th>
-                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide w-28">Tugas (40%)</th>
-                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide w-28">UTS (30%)</th>
-                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide w-28">UAS (30%)</th>
-                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide w-24">Nilai Akhir</th>
-                      <th className="text-center px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide w-20">Aksi</th>
+                    <tr className="bg-surface-50 border-b border-surface-100">
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-12">No</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Siswa</th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-32">Tugas (40%)</th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-32">UTS (30%)</th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-32">UAS (30%)</th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-28">Nilai Akhir</th>
+                      <th className="text-center px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-24">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-surface-100">
                     {nilaiForms.map((f, i) => {
                       const isSaving = saving[f.siswa_id];
                       return (
-                        <tr key={f.siswa_id} className={`hover:bg-gray-50/50 transition-colors ${f.dirty ? 'bg-amber-50/30' : ''}`}>
-                          <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                          <td className="px-4 py-3">
-                            <p className="font-medium text-gray-900">{f.siswa_nama}</p>
-                            <p className="text-xs text-gray-400">{f.siswa_nis || 'NIS tidak ada'}</p>
+                        <tr
+                          key={f.siswa_id}
+                          className={`group transition-colors duration-150 ${
+                            f.dirty
+                              ? 'bg-warning-50/40'
+                              : 'hover:bg-surface-50/80'
+                          }`}
+                        >
+                          <td className="px-6 py-3.5 text-surface-400 font-medium tabular-nums">{i + 1}</td>
+                          <td className="px-6 py-3.5">
+                            <p className="font-medium text-surface-900">{f.siswa_nama}</p>
+                            <p className="text-xs text-surface-400 mt-0.5">{f.siswa_nis || 'NIS tidak ada'}</p>
                           </td>
                           {(['nilai_tugas', 'nilai_uts', 'nilai_uas'] as const).map(field => (
-                            <td key={field} className="px-4 py-2 text-center">
+                            <td key={field} className="px-4 py-3 text-center">
                               <input
                                 type="number"
                                 min="0"
@@ -228,38 +252,47 @@ export default function KelolaNilai() {
                                 step="0.5"
                                 value={f[field]}
                                 onChange={e => updateForm(i, field, e.target.value)}
-                                className={`w-20 px-2 py-1.5 text-center border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                  f[field] && !validateScore(f[field]) ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                                className={`w-20 px-2.5 py-1.5 text-center text-sm rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent ${
+                                  f[field] && !validateScore(f[field])
+                                    ? 'input-error'
+                                    : 'border border-surface-200 bg-white'
                                 }`}
                                 placeholder="0"
                               />
                             </td>
                           ))}
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-4 py-3.5 text-center">
                             {f.nilai_akhir != null ? (
-                              <span className={`font-bold text-base ${
-                                f.nilai_akhir >= 75 ? 'text-emerald-600' : f.nilai_akhir >= 60 ? 'text-amber-600' : 'text-red-600'
+                              <span className={`font-bold text-base tabular-nums ${
+                                f.nilai_akhir >= 75 ? 'text-success-600' : f.nilai_akhir >= 60 ? 'text-warning-600' : 'text-danger-600'
                               }`}>
                                 {f.nilai_akhir.toFixed(1)}
                               </span>
-                            ) : <span className="text-gray-300">—</span>}
+                            ) : (
+                              <span className="text-surface-300">—</span>
+                            )}
                           </td>
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-6 py-3.5 text-center">
                             {f.dirty ? (
                               <button
                                 onClick={() => handleSave(i)}
                                 disabled={isSaving}
-                                className="inline-flex items-center gap-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-60"
+                                className="btn-primary px-3 py-1.5 text-xs"
                               >
-                                {isSaving ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-3 h-3" />}
+                                {isSaving ? (
+                                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Save className="w-3.5 h-3.5" />
+                                )}
                                 Simpan
                               </button>
                             ) : f.nilai_id ? (
-                              <span className="text-xs text-gray-400 flex items-center gap-1 justify-center">
-                                <RotateCcw className="w-3 h-3" /> Tersimpan
+                              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success-600">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Tersimpan
                               </span>
                             ) : (
-                              <span className="text-xs text-gray-300">Belum diisi</span>
+                              <span className="text-xs text-surface-300">Belum diisi</span>
                             )}
                           </td>
                         </tr>

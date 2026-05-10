@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { TrendingUp, CheckCircle2, ChevronDown, Filter } from 'lucide-react';
 import Layout from '../../components/Layout';
+import StatCard from '../../components/StatCard';
 import EmptyState from '../../components/EmptyState';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -11,24 +13,24 @@ interface NilaiRow extends Nilai {
 }
 
 function gradeColor(v: number) {
-  if (v >= 90) return 'text-emerald-700 font-bold';
-  if (v >= 75) return 'text-blue-700 font-semibold';
-  if (v >= 60) return 'text-amber-700';
-  return 'text-red-600';
+  if (v >= 90) return 'text-success-700 font-bold';
+  if (v >= 75) return 'text-brand-700 font-semibold';
+  if (v >= 60) return 'text-warning-700';
+  return 'text-danger-600';
 }
 
 function gradeBadge(v: number) {
-  if (v >= 90) return { label: 'A', cls: 'bg-emerald-100 text-emerald-700' };
-  if (v >= 80) return { label: 'B+', cls: 'bg-blue-100 text-blue-700' };
-  if (v >= 75) return { label: 'B', cls: 'bg-blue-100 text-blue-600' };
-  if (v >= 65) return { label: 'C+', cls: 'bg-amber-100 text-amber-700' };
-  if (v >= 60) return { label: 'C', cls: 'bg-amber-100 text-amber-600' };
-  return { label: 'D', cls: 'bg-red-100 text-red-600' };
+  if (v >= 90) return { label: 'A', cls: 'bg-success-50 text-success-700' };
+  if (v >= 80) return { label: 'B+', cls: 'bg-brand-50 text-brand-700' };
+  if (v >= 75) return { label: 'B', cls: 'bg-brand-50 text-brand-600' };
+  if (v >= 65) return { label: 'C+', cls: 'bg-warning-50 text-warning-700' };
+  if (v >= 60) return { label: 'C', cls: 'bg-warning-50 text-warning-600' };
+  return { label: 'D', cls: 'bg-danger-50 text-danger-600' };
 }
 
 export default function LihatNilai() {
   const { user } = useAuth();
-  const [siswaProfile, setSiswaProfile] = useState<Siswa | null>(null);
+  const [, setSiswaProfile] = useState<Siswa | null>(null);
   const [rows, setRows] = useState<NilaiRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedKelas, setSelectedKelas] = useState('');
@@ -63,68 +65,87 @@ export default function LihatNilai() {
   const filtered = selectedKelas ? rows.filter(r => r.kelas_id === selectedKelas) : rows;
   const avg = filtered.length ? filtered.reduce((s, r) => s + (r.nilai_akhir ?? 0), 0) / filtered.length : 0;
   const lulus = filtered.filter(r => (r.nilai_akhir ?? 0) >= 75).length;
+  const lulusRate = filtered.length ? Math.round((lulus / filtered.length) * 100) : 0;
 
   return (
     <Layout title="Nilai Saya" subtitle="Daftar nilai mata pelajaran Anda">
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)}
+        <div className="space-y-3 animate-fade-in">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="card p-6 h-20 animate-pulse">
+              <div className="h-4 bg-surface-100 rounded w-3/4" />
+            </div>
+          ))}
         </div>
       ) : rows.length === 0 ? (
         <EmptyState message="Belum ada data nilai" description="Nilai Anda belum diinput oleh guru" />
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-6 animate-fade-in">
           {/* Filters & summary */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <select
-                value={selectedKelas}
-                onChange={e => setSelectedKelas(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Semua Kelas</option>
-                {kelasList.map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
-              </select>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Filter className="w-4 h-4 text-surface-400" />
+                <span className="text-xs font-medium text-surface-500 uppercase tracking-wider">Filter</span>
+              </div>
+              <div className="relative">
+                <select
+                  value={selectedKelas}
+                  onChange={e => setSelectedKelas(e.target.value)}
+                  className="input appearance-none pr-10 cursor-pointer w-56"
+                >
+                  <option value="">Semua Kelas</option>
+                  {kelasList.map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400 pointer-events-none" />
+              </div>
             </div>
-            <div className="flex gap-4 text-sm">
-              <div className="text-center">
-                <p className="font-bold text-blue-700 text-lg">{avg.toFixed(1)}</p>
-                <p className="text-gray-400 text-xs">Rata-rata</p>
-              </div>
-              <div className="text-center">
-                <p className="font-bold text-emerald-600 text-lg">{lulus}/{filtered.length}</p>
-                <p className="text-gray-400 text-xs">Lulus</p>
-              </div>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+              <StatCard
+                label="Rata-rata"
+                value={avg.toFixed(1)}
+                icon={<TrendingUp className="w-5 h-5" />}
+                color="text-brand-600"
+                bg="bg-brand-50"
+              />
+              <StatCard
+                label="Ketuntasan"
+                value={`${lulusRate}%`}
+                icon={<CheckCircle2 className="w-5 h-5" />}
+                color="text-success-600"
+                bg="bg-success-50"
+                trend={{ value: `${lulus}/${filtered.length} lulus`, up: lulusRate >= 75 }}
+              />
             </div>
           </div>
 
-          {/* Cards view for mobile, table for desktop */}
-          <div className="sm:hidden space-y-3">
+          {/* Mobile card view */}
+          <div className="sm:hidden space-y-3 animate-slide-up">
             {filtered.map(r => {
               const badge = r.nilai_akhir != null ? gradeBadge(r.nilai_akhir) : null;
               return (
-                <div key={r.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                  <div className="flex items-center justify-between mb-3">
+                <div key={r.id} className="card p-5">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="font-semibold text-gray-900">{r.mapel?.nama_mapel}</p>
-                      <p className="text-xs text-gray-400">{r.kelas?.nama_kelas}</p>
+                      <p className="font-semibold text-surface-900">{r.mapel?.nama_mapel}</p>
+                      <p className="text-xs text-surface-400 mt-0.5">{r.kelas?.nama_kelas}</p>
                     </div>
                     {badge && (
-                      <span className={`text-sm font-bold px-2.5 py-1 rounded-lg ${badge.cls}`}>{badge.label}</span>
+                      <span className={`badge text-sm ${badge.cls}`}>{badge.label}</span>
                     )}
                   </div>
-                  <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="grid grid-cols-4 gap-2">
                     {[
                       { label: 'Tugas', val: r.nilai_tugas },
                       { label: 'UTS', val: r.nilai_uts },
                       { label: 'UAS', val: r.nilai_uas },
                       { label: 'Akhir', val: r.nilai_akhir },
                     ].map(n => (
-                      <div key={n.label} className="bg-gray-50 rounded-lg p-2">
-                        <p className={`font-bold text-base ${n.val != null ? gradeColor(n.val) : 'text-gray-300'}`}>
+                      <div key={n.label} className="bg-surface-50 rounded-lg p-2.5 text-center">
+                        <p className={`font-bold text-base tabular-nums ${n.val != null ? gradeColor(n.val) : 'text-surface-300'}`}>
                           {n.val?.toFixed(1) ?? '-'}
                         </p>
-                        <p className="text-xs text-gray-400">{n.label}</p>
+                        <p className="text-[10px] text-surface-400 uppercase tracking-wider mt-0.5">{n.label}</p>
                       </div>
                     ))}
                   </div>
@@ -134,37 +155,43 @@ export default function LihatNilai() {
           </div>
 
           {/* Desktop table */}
-          <div className="hidden sm:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="hidden sm:block card overflow-hidden animate-slide-up">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  {['No', 'Mata Pelajaran', 'Kelas', 'Tugas (40%)', 'UTS (30%)', 'UAS (30%)', 'Nilai Akhir', 'Grade', 'Status'].map(h => (
-                    <th key={h} className={`px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide ${['Tugas (40%)', 'UTS (30%)', 'UAS (30%)', 'Nilai Akhir', 'Grade', 'Status'].includes(h) ? 'text-center' : 'text-left'}`}>{h}</th>
-                  ))}
+                <tr className="bg-surface-50 border-b border-surface-100">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider w-12">No</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Mata Pelajaran</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Kelas</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Tugas (40%)</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">UTS (30%)</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">UAS (30%)</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Nilai Akhir</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Grade</th>
+                  <th className="text-center px-6 py-3 text-xs font-semibold text-surface-500 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-surface-100">
                 {filtered.map((r, i) => {
                   const badge = r.nilai_akhir != null ? gradeBadge(r.nilai_akhir) : null;
                   const lulus = (r.nilai_akhir ?? 0) >= 75;
                   return (
-                    <tr key={r.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                      <td className="px-4 py-3 font-medium text-gray-900">{r.mapel?.nama_mapel}</td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{r.kelas?.nama_kelas}</span>
+                    <tr key={r.id} className="hover:bg-surface-50/80 transition-colors duration-150">
+                      <td className="px-6 py-3.5 text-surface-400 font-medium tabular-nums">{i + 1}</td>
+                      <td className="px-6 py-3.5 font-medium text-surface-900">{r.mapel?.nama_mapel}</td>
+                      <td className="px-4 py-3.5">
+                        <span className="badge bg-surface-100 text-surface-600">{r.kelas?.nama_kelas}</span>
                       </td>
-                      <td className={`px-4 py-3 text-center ${gradeColor(r.nilai_tugas)}`}>{r.nilai_tugas?.toFixed(1)}</td>
-                      <td className={`px-4 py-3 text-center ${gradeColor(r.nilai_uts)}`}>{r.nilai_uts?.toFixed(1)}</td>
-                      <td className={`px-4 py-3 text-center ${gradeColor(r.nilai_uas)}`}>{r.nilai_uas?.toFixed(1)}</td>
-                      <td className={`px-4 py-3 text-center text-base ${r.nilai_akhir != null ? gradeColor(r.nilai_akhir) : 'text-gray-300'}`}>
+                      <td className={`px-4 py-3.5 text-center tabular-nums ${gradeColor(r.nilai_tugas)}`}>{r.nilai_tugas?.toFixed(1)}</td>
+                      <td className={`px-4 py-3.5 text-center tabular-nums ${gradeColor(r.nilai_uts)}`}>{r.nilai_uts?.toFixed(1)}</td>
+                      <td className={`px-4 py-3.5 text-center tabular-nums ${gradeColor(r.nilai_uas)}`}>{r.nilai_uas?.toFixed(1)}</td>
+                      <td className={`px-4 py-3.5 text-center text-base tabular-nums ${r.nilai_akhir != null ? gradeColor(r.nilai_akhir) : 'text-surface-300'}`}>
                         {r.nilai_akhir?.toFixed(1) ?? '-'}
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        {badge && <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>}
+                      <td className="px-4 py-3.5 text-center">
+                        {badge && <span className={`badge ${badge.cls}`}>{badge.label}</span>}
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${lulus ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
+                      <td className="px-6 py-3.5 text-center">
+                        <span className={`badge ${lulus ? 'bg-success-50 text-success-700' : 'bg-danger-50 text-danger-600'}`}>
                           {lulus ? 'Lulus' : 'Tidak Lulus'}
                         </span>
                       </td>

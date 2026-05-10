@@ -6,17 +6,25 @@ interface Props {
   icon: ReactNode;
   color: string;
   bg: string;
+  trend?: { value: string; up: boolean };
 }
 
-export default function StatCard({ label, value, icon, color, bg }: Props) {
+export default function StatCard({ label, value, icon, color, bg, trend }: Props) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 flex items-center gap-4">
-      <div className={`w-14 h-14 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
-        <span className={color}>{icon}</span>
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-        <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+    <div className="card p-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm text-surface-500 font-medium">{label}</p>
+          <p className="text-2xl font-bold text-surface-900 mt-1">{value}</p>
+          {trend && (
+            <p className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${trend.up ? 'text-success-600' : 'text-danger-600'}`}>
+              <span>{trend.up ? '\u2191' : '\u2193'}</span> {trend.value}
+            </p>
+          )}
+        </div>
+        <div className={`w-11 h-11 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
+          <span className={color}>{icon}</span>
+        </div>
       </div>
     </div>
   );

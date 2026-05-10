@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, BookOpen } from 'lucide-react';
 import Layout from '../../components/Layout';
 import Modal from '../../components/Modal';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -77,16 +77,16 @@ export default function KelolaMapel() {
     setDeleting(false); setDeleteId(null);
   };
 
-  const inp = (name: keyof FormData, label: string, placeholder: string, textarea = false) => (
+  const Field = ({ label, name, placeholder, textarea = false }: { label: string; name: keyof FormData; placeholder: string; textarea?: boolean }) => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-surface-700 mb-1.5">{label}</label>
       {textarea ? (
         <textarea
           value={form[name]}
           onChange={e => setForm(f => ({ ...f, [name]: e.target.value }))}
           placeholder={placeholder}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className={errors[name] ? 'input-error resize-none' : 'input resize-none'}
         />
       ) : (
         <input
@@ -94,50 +94,84 @@ export default function KelolaMapel() {
           value={form[name]}
           onChange={e => setForm(f => ({ ...f, [name]: e.target.value }))}
           placeholder={placeholder}
-          className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
+          className={errors[name] ? 'input-error' : 'input'}
         />
       )}
-      {errors[name] && <p className="text-xs text-red-500 mt-1">{errors[name]}</p>}
+      {errors[name] && <p className="text-xs text-danger-600 mt-1.5">{errors[name]}</p>}
     </div>
   );
 
   return (
-    <Layout title="Kelola Mata Pelajaran" subtitle="Manajemen data mata pelajaran sekolah">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-b border-gray-100">
-          <SearchInput value={search} onChange={setSearch} placeholder="Cari mata pelajaran..." />
-          <button onClick={openAdd} className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-            <Plus className="w-4 h-4" />Tambah Mapel
-          </button>
+    <Layout
+      title="Kelola Mata Pelajaran"
+      subtitle="Manajemen data mata pelajaran sekolah"
+      action={
+        <button onClick={openAdd} className="btn-primary px-4 py-2.5">
+          <Plus className="w-4 h-4" />
+          Tambah Mapel
+        </button>
+      }
+    >
+      <div className="card animate-fade-in">
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-b border-surface-100">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-danger-50 flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-danger-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-surface-900">Daftar Mata Pelajaran</p>
+              <p className="text-xs text-surface-400">{filtered.length} data</p>
+            </div>
+          </div>
+          <SearchInput value={search} onChange={setSearch} placeholder="Cari kode atau nama mapel..." />
         </div>
 
+        {/* Content */}
         {loading ? (
-          <div className="p-8 text-center text-sm text-gray-500">Memuat data...</div>
+          <div className="p-12 text-center">
+            <div className="inline-flex items-center gap-2 text-sm text-surface-400">
+              <span className="w-4 h-4 border-2 border-surface-300 border-t-danger-500 rounded-full animate-spin" />
+              Memuat data...
+            </div>
+          </div>
         ) : filtered.length === 0 ? (
           <EmptyState message="Belum ada mata pelajaran" description="Klik tombol Tambah Mapel untuk membuat mata pelajaran baru" />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  {['No', 'Kode', 'Nama Mata Pelajaran', 'Deskripsi', 'Aksi'].map(h => (
-                    <th key={h} className={`px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide ${h === 'Aksi' ? 'text-right' : 'text-left'}`}>{h}</th>
-                  ))}
+                <tr className="border-b border-surface-100">
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">No</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Kode</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Nama Mata Pelajaran</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Deskripsi</th>
+                  <th className="text-right px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-surface-50">
                 {filtered.map((m, i) => (
-                  <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-xs font-semibold bg-gray-100 text-gray-700 px-2 py-1 rounded">{m.kode_mapel}</span>
+                  <tr key={m.id} className="group hover:bg-surface-50/80 transition-colors">
+                    <td className="px-5 py-3.5 text-surface-400 text-xs">{i + 1}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="font-mono text-xs font-semibold text-surface-700 bg-surface-100 px-2 py-1 rounded">
+                        {m.kode_mapel}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{m.nama_mapel}</td>
-                    <td className="px-4 py-3 text-gray-500 max-w-xs truncate">{m.deskripsi ?? '-'}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openEdit(m)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => setDeleteId(m.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                    <td className="px-5 py-3.5">
+                      <p className="font-medium text-surface-900">{m.nama_mapel}</p>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <p className="text-surface-500 max-w-xs truncate">{m.deskripsi ?? '-'}</p>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEdit(m)} className="btn-ghost p-2 rounded-lg" title="Edit">
+                          <Pencil className="w-3.5 h-3.5 text-brand-600" />
+                        </button>
+                        <button onClick={() => setDeleteId(m.id)} className="btn-ghost p-2 rounded-lg" title="Hapus">
+                          <Trash2 className="w-3.5 h-3.5 text-danger-500" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -148,14 +182,24 @@ export default function KelolaMapel() {
         )}
       </div>
 
+      {/* Modal */}
       <Modal open={modalOpen} title={editItem ? 'Edit Mata Pelajaran' : 'Tambah Mata Pelajaran Baru'} onClose={() => setModalOpen(false)}>
-        <div className="space-y-4">
-          {inp('kode_mapel', 'Kode Mapel', 'Contoh: MTK, ING, FIS')}
-          {inp('nama_mapel', 'Nama Mata Pelajaran', 'Contoh: Matematika')}
-          {inp('deskripsi', 'Deskripsi (Opsional)', 'Deskripsi singkat mata pelajaran', true)}
-          <div className="flex gap-3 pt-2">
-            <button onClick={() => setModalOpen(false)} className="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Batal</button>
-            <button onClick={handleSave} disabled={saving} className="flex-1 py-2 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+        <div className="space-y-5">
+          <div className="space-y-4">
+            <p className="text-xs font-semibold text-surface-400 uppercase tracking-wider">Informasi Mata Pelajaran</p>
+            <Field label="Kode Mapel" name="kode_mapel" placeholder="Contoh: MTK, ING, FIS" />
+            <Field label="Nama Mata Pelajaran" name="nama_mapel" placeholder="Contoh: Matematika" />
+            <Field label="Deskripsi (Opsional)" name="deskripsi" placeholder="Deskripsi singkat mata pelajaran" textarea />
+          </div>
+          <div className="flex gap-3 pt-3 border-t border-surface-100">
+            <button onClick={() => setModalOpen(false)} className="btn-secondary flex-1 py-2.5">
+              Batal
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="btn-primary flex-1 py-2.5"
+            >
               {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
@@ -163,7 +207,7 @@ export default function KelolaMapel() {
         </div>
       </Modal>
 
-      <ConfirmDialog open={!!deleteId} title="Hapus Mata Pelajaran" message="Apakah Anda yakin ingin menghapus mata pelajaran ini?" onConfirm={handleDelete} onCancel={() => setDeleteId(null)} loading={deleting} />
+      <ConfirmDialog open={!!deleteId} title="Hapus Mata Pelajaran" message="Apakah Anda yakin ingin menghapus mata pelajaran ini? Tindakan ini tidak dapat dibatalkan." onConfirm={handleDelete} onCancel={() => setDeleteId(null)} loading={deleting} />
     </Layout>
   );
 }

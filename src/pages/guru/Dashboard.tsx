@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, Users } from 'lucide-react';
+import { BookOpen, Users, GraduationCap, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
+import StatCard from '../../components/StatCard';
 import EmptyState from '../../components/EmptyState';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -20,6 +21,9 @@ export default function GuruDashboard() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const totalKelas = new Set(assignments.map(a => a.kelas_id)).size;
+  const totalSiswa = assignments.reduce((sum, a) => sum + (a.siswaCount ?? 0), 0);
+
   useEffect(() => {
     async function load() {
       if (!user) return;
@@ -33,7 +37,6 @@ export default function GuruDashboard() {
 
       const asgn = (data ?? []) as Assignment[];
 
-      // Get student counts per class
       const kelasIds = [...new Set(asgn.map(a => a.kelas_id))];
       const counts = await Promise.all(
         kelasIds.map(id => supabase.from('kelas_siswa').select('id', { count: 'exact', head: true }).eq('kelas_id', id))
@@ -47,53 +50,106 @@ export default function GuruDashboard() {
 
   return (
     <Layout title="Dashboard Guru" subtitle={`Selamat datang, ${user?.nama}`}>
-      <div className="mb-6 bg-gradient-to-r from-blue-700 to-blue-500 rounded-xl p-6 text-white shadow-md">
-        <div className="flex items-center gap-3">
-          <BookOpen className="w-8 h-8 opacity-80" />
-          <div>
-            <p className="text-blue-100 text-sm">Tahun Ajaran Aktif</p>
-            <h2 className="text-xl font-bold">Kelas & Mata Pelajaran Saya</h2>
+      <div className="space-y-8 animate-fade-in">
+        {/* Hero banner */}
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950 p-6 lg:p-8">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-brand-600/20 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-500/10 rounded-full translate-y-1/2 -translate-x-1/4 blur-2xl" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-brand-200 text-sm font-medium">Tahun Ajaran Aktif</p>
+              <h2 className="text-xl lg:text-2xl font-bold text-white mt-0.5">Kelas & Mata Pelajaran Saya</h2>
+            </div>
           </div>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 h-32 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
-              <div className="h-3 bg-gray-100 rounded w-1/2" />
-            </div>
-          ))}
-        </div>
-      ) : assignments.length === 0 ? (
-        <EmptyState message="Belum ada kelas yang diajarkan" description="Hubungi admin untuk mendapatkan penugasan mengajar" />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {assignments.map(a => (
-            <button
-              key={a.id}
-              onClick={() => navigate('/guru/nilai')}
-              className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 text-left hover:border-blue-300 hover:shadow-md transition-all duration-150 group"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                  <BookOpen className="w-5 h-5 text-blue-600" />
+        {/* Stats row */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="card p-5 animate-pulse">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <div className="h-3.5 bg-surface-100 rounded w-20" />
+                    <div className="h-7 bg-surface-100 rounded w-12" />
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-surface-100" />
                 </div>
-                <span className="text-xs font-medium bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">
-                  {a.kelas?.tahun_ajaran}
-                </span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-1">{a.mapel?.nama_mapel}</h3>
-              <p className="text-sm text-blue-600 font-medium">{a.kelas?.nama_kelas}</p>
-              <div className="flex items-center gap-1 mt-3 text-xs text-gray-400">
-                <Users className="w-3.5 h-3.5" />
-                <span>{a.siswaCount} siswa terdaftar</span>
+            ))}
+          </div>
+        ) : assignments.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-slide-up">
+            <StatCard
+              label="Mata Pelajaran"
+              value={assignments.length}
+              icon={<BookOpen className="w-5 h-5" />}
+              color="text-brand-600"
+              bg="bg-brand-50"
+            />
+            <StatCard
+              label="Kelas Diajar"
+              value={totalKelas}
+              icon={<GraduationCap className="w-5 h-5" />}
+              color="text-success-600"
+              bg="bg-success-50"
+            />
+            <StatCard
+              label="Total Siswa"
+              value={totalSiswa}
+              icon={<Users className="w-5 h-5" />}
+              color="text-warning-600"
+              bg="bg-warning-50"
+            />
+          </div>
+        )}
+
+        {/* Assignment cards */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="card p-6 h-40 animate-pulse">
+                <div className="h-4 bg-surface-100 rounded w-3/4 mb-3" />
+                <div className="h-3 bg-surface-50 rounded w-1/2 mb-6" />
+                <div className="h-3 bg-surface-50 rounded w-1/3" />
               </div>
-            </button>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : assignments.length === 0 ? (
+          <EmptyState message="Belum ada kelas yang diajarkan" description="Hubungi admin untuk mendapatkan penugasan mengajar" />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-slide-up">
+            {assignments.map(a => (
+              <button
+                key={a.id}
+                onClick={() => navigate('/guru/nilai')}
+                className="card-hover p-6 text-left group rounded-xl"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center group-hover:bg-brand-100 transition-colors duration-200">
+                    <BookOpen className="w-5 h-5 text-brand-600" />
+                  </div>
+                  <span className="badge bg-success-50 text-success-700">
+                    {a.kelas?.tahun_ajaran}
+                  </span>
+                </div>
+                <h3 className="font-semibold text-surface-900 mb-1">{a.mapel?.nama_mapel}</h3>
+                <p className="text-sm text-brand-600 font-medium">{a.kelas?.nama_kelas}</p>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-surface-100">
+                  <div className="flex items-center gap-1.5 text-xs text-surface-400">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>{a.siswaCount} siswa terdaftar</span>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-surface-300 group-hover:text-brand-600 group-hover:translate-x-0.5 transition-all duration-200" />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </Layout>
   );
 }

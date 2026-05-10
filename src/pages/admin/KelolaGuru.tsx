@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Mail, Phone } from 'lucide-react';
 import Layout from '../../components/Layout';
 import Modal from '../../components/Modal';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -87,7 +87,6 @@ export default function KelolaGuru() {
       if (error) { notify('error', 'Gagal memperbarui data guru'); setSaving(false); return; }
       notify('success', 'Data guru berhasil diperbarui');
     } else {
-      // Check username availability
       const { data: existing } = await supabase.from('users').select('id').eq('username', form.username).maybeSingle();
       if (existing) {
         setErrors(e => ({ ...e, username: 'Username sudah digunakan' }));
@@ -138,64 +137,104 @@ export default function KelolaGuru() {
 
   const Field = ({ label, name, type = 'text', placeholder }: { label: string; name: keyof FormData; type?: string; placeholder?: string }) => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-surface-700 mb-1.5">{label}</label>
       <input
         type={type}
         value={form[name]}
         onChange={e => setForm(f => ({ ...f, [name]: e.target.value }))}
         placeholder={placeholder}
-        className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
+        className={errors[name] ? 'input-error' : 'input'}
       />
-      {errors[name] && <p className="text-xs text-red-500 mt-1">{errors[name]}</p>}
+      {errors[name] && <p className="text-xs text-danger-600 mt-1.5">{errors[name]}</p>}
     </div>
   );
 
   return (
-    <Layout title="Kelola Data Guru" subtitle="Manajemen data guru dan akun pengajar">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-b border-gray-100">
-          <SearchInput value={search} onChange={setSearch} placeholder="Cari guru..." />
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Tambah Guru
-          </button>
+    <Layout
+      title="Kelola Data Guru"
+      subtitle="Manajemen data guru dan akun pengajar"
+      action={
+        <button onClick={openAdd} className="btn-primary px-4 py-2.5">
+          <Plus className="w-4 h-4" />
+          Tambah Guru
+        </button>
+      }
+    >
+      <div className="card animate-fade-in">
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-b border-surface-100">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
+              <Users className="w-4 h-4 text-brand-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-surface-900">Daftar Guru</p>
+              <p className="text-xs text-surface-400">{filtered.length} data</p>
+            </div>
+          </div>
+          <SearchInput value={search} onChange={setSearch} placeholder="Cari nama, NIP, atau email..." />
         </div>
 
+        {/* Content */}
         {loading ? (
-          <div className="p-8 text-center text-sm text-gray-500">Memuat data...</div>
+          <div className="p-12 text-center">
+            <div className="inline-flex items-center gap-2 text-sm text-surface-400">
+              <span className="w-4 h-4 border-2 border-surface-300 border-t-brand-600 rounded-full animate-spin" />
+              Memuat data...
+            </div>
+          </div>
         ) : filtered.length === 0 ? (
           <EmptyState message="Belum ada data guru" description="Klik tombol Tambah Guru untuk menambahkan data guru" />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">No</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">NIP</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Nama</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Email</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Telepon</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">Aksi</th>
+                <tr className="border-b border-surface-100">
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">No</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">NIP</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Nama</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Email</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Telepon</th>
+                  <th className="text-right px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-surface-50">
                 {filtered.map((g, i) => (
-                  <tr key={g.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600">{g.nip ?? '-'}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{g.nama}</td>
-                    <td className="px-4 py-3 text-gray-500">{g.email ?? '-'}</td>
-                    <td className="px-4 py-3 text-gray-500">{g.telepon ?? '-'}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openEdit(g)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                          <Pencil className="w-4 h-4" />
+                  <tr key={g.id} className="group hover:bg-surface-50/80 transition-colors">
+                    <td className="px-5 py-3.5 text-surface-400 text-xs">{i + 1}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="font-mono text-xs text-surface-600 bg-surface-100 px-2 py-0.5 rounded">{g.nip ?? '-'}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <p className="font-medium text-surface-900">{g.nama}</p>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {g.email ? (
+                        <span className="flex items-center gap-1.5 text-surface-500">
+                          <Mail className="w-3.5 h-3.5 text-surface-400" />
+                          {g.email}
+                        </span>
+                      ) : (
+                        <span className="text-surface-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {g.telepon ? (
+                        <span className="flex items-center gap-1.5 text-surface-500">
+                          <Phone className="w-3.5 h-3.5 text-surface-400" />
+                          {g.telepon}
+                        </span>
+                      ) : (
+                        <span className="text-surface-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEdit(g)} className="btn-ghost p-2 rounded-lg" title="Edit">
+                          <Pencil className="w-3.5 h-3.5 text-brand-600" />
                         </button>
-                        <button onClick={() => setDeleteId(g.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4" />
+                        <button onClick={() => setDeleteId(g.id)} className="btn-ghost p-2 rounded-lg" title="Hapus">
+                          <Trash2 className="w-3.5 h-3.5 text-danger-500" />
                         </button>
                       </div>
                     </td>
@@ -207,31 +246,33 @@ export default function KelolaGuru() {
         )}
       </div>
 
+      {/* Modal */}
       <Modal open={modalOpen} title={editItem ? 'Edit Data Guru' : 'Tambah Guru Baru'} onClose={() => setModalOpen(false)}>
-        <div className="space-y-4">
-          <Field label="NIP" name="nip" placeholder="Nomor Induk Pegawai" />
-          <Field label="Nama Lengkap" name="nama" placeholder="Nama lengkap guru" />
-          <Field label="Email" name="email" type="email" placeholder="Email (opsional)" />
-          <Field label="Telepon" name="telepon" placeholder="Nomor telepon (opsional)" />
+        <div className="space-y-5">
+          <div className="space-y-4">
+            <p className="text-xs font-semibold text-surface-400 uppercase tracking-wider">Informasi Pribadi</p>
+            <Field label="NIP" name="nip" placeholder="Nomor Induk Pegawai" />
+            <Field label="Nama Lengkap" name="nama" placeholder="Nama lengkap guru" />
+            <Field label="Email" name="email" type="email" placeholder="Email (opsional)" />
+            <Field label="Telepon" name="telepon" placeholder="Nomor telepon (opsional)" />
+          </div>
           {!editItem && (
-            <>
-              <div className="border-t border-gray-100 pt-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Akun Login</p>
-                <div className="space-y-3">
-                  <Field label="Username" name="username" placeholder="Username untuk login" />
-                  <Field label="Password" name="password" type="password" placeholder="Password untuk login" />
-                </div>
+            <div className="border-t border-surface-100 pt-5">
+              <p className="text-xs font-semibold text-surface-400 uppercase tracking-wider mb-4">Akun Login</p>
+              <div className="space-y-4">
+                <Field label="Username" name="username" placeholder="Username untuk login" />
+                <Field label="Password" name="password" type="password" placeholder="Password untuk login" />
               </div>
-            </>
+            </div>
           )}
-          <div className="flex gap-3 pt-2">
-            <button onClick={() => setModalOpen(false)} className="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+          <div className="flex gap-3 pt-3 border-t border-surface-100">
+            <button onClick={() => setModalOpen(false)} className="btn-secondary flex-1 py-2.5">
               Batal
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 py-2 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="btn-primary flex-1 py-2.5"
             >
               {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
               {saving ? 'Menyimpan...' : 'Simpan'}

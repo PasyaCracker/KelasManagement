@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, School } from 'lucide-react';
 import Layout from '../../components/Layout';
 import Modal from '../../components/Modal';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -80,73 +80,110 @@ export default function KelolaKelas() {
     setDeleting(false); setDeleteId(null);
   };
 
-  const sel = (name: keyof FormData, label: string, opts: string[]) => (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <select
-        value={form[name]}
-        onChange={e => setForm(f => ({ ...f, [name]: e.target.value }))}
-        className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
-      >
-        <option value="">Pilih {label.toLowerCase()}</option>
-        {opts.map(o => <option key={o} value={o}>{o}</option>)}
-      </select>
-      {errors[name] && <p className="text-xs text-red-500 mt-1">{errors[name]}</p>}
-    </div>
-  );
+  const tingkatColors: Record<string, string> = {
+    'X': 'bg-brand-50 text-brand-700',
+    'XI': 'bg-success-50 text-success-700',
+    'XII': 'bg-warning-50 text-warning-700',
+  };
 
-  const inp = (name: keyof FormData, label: string, placeholder: string) => (
+  const Field = ({ label, name, type = 'text', placeholder, isSelect = false, options = [] }: { label: string; name: keyof FormData; type?: string; placeholder?: string; isSelect?: boolean; options?: string[] }) => (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <input
-        type="text"
-        value={form[name]}
-        onChange={e => setForm(f => ({ ...f, [name]: e.target.value }))}
-        placeholder={placeholder}
-        className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors[name] ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
-      />
-      {errors[name] && <p className="text-xs text-red-500 mt-1">{errors[name]}</p>}
+      <label className="block text-sm font-medium text-surface-700 mb-1.5">{label}</label>
+      {isSelect ? (
+        <select
+          value={form[name]}
+          onChange={e => setForm(f => ({ ...f, [name]: e.target.value }))}
+          className={errors[name] ? 'input-error' : 'input'}
+        >
+          <option value="">Pilih {label.toLowerCase()}</option>
+          {options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      ) : (
+        <input
+          type={type}
+          value={form[name]}
+          onChange={e => setForm(f => ({ ...f, [name]: e.target.value }))}
+          placeholder={placeholder}
+          className={errors[name] ? 'input-error' : 'input'}
+        />
+      )}
+      {errors[name] && <p className="text-xs text-danger-600 mt-1.5">{errors[name]}</p>}
     </div>
   );
 
   return (
-    <Layout title="Kelola Data Kelas" subtitle="Manajemen data kelas dan rombongan belajar">
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-b border-gray-100">
-          <SearchInput value={search} onChange={setSearch} placeholder="Cari kelas..." />
-          <button onClick={openAdd} className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-            <Plus className="w-4 h-4" />Tambah Kelas
-          </button>
+    <Layout
+      title="Kelola Data Kelas"
+      subtitle="Manajemen data kelas dan rombongan belajar"
+      action={
+        <button onClick={openAdd} className="btn-primary px-4 py-2.5">
+          <Plus className="w-4 h-4" />
+          Tambah Kelas
+        </button>
+      }
+    >
+      <div className="card animate-fade-in">
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-b border-surface-100">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-warning-50 flex items-center justify-center">
+              <School className="w-4 h-4 text-warning-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-surface-900">Daftar Kelas</p>
+              <p className="text-xs text-surface-400">{filtered.length} data</p>
+            </div>
+          </div>
+          <SearchInput value={search} onChange={setSearch} placeholder="Cari kelas, tingkat, atau jurusan..." />
         </div>
 
+        {/* Content */}
         {loading ? (
-          <div className="p-8 text-center text-sm text-gray-500">Memuat data...</div>
+          <div className="p-12 text-center">
+            <div className="inline-flex items-center gap-2 text-sm text-surface-400">
+              <span className="w-4 h-4 border-2 border-surface-300 border-t-warning-500 rounded-full animate-spin" />
+              Memuat data...
+            </div>
+          </div>
         ) : filtered.length === 0 ? (
           <EmptyState message="Belum ada data kelas" description="Klik tombol Tambah Kelas untuk membuat kelas baru" />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  {['No', 'Nama Kelas', 'Tingkat', 'Jurusan', 'Tahun Ajaran', 'Aksi'].map(h => (
-                    <th key={h} className={`px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide ${h === 'Aksi' ? 'text-right' : 'text-left'}`}>{h}</th>
-                  ))}
+                <tr className="border-b border-surface-100">
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">No</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Nama Kelas</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Tingkat</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Jurusan</th>
+                  <th className="text-left px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Tahun Ajaran</th>
+                  <th className="text-right px-5 py-3 font-semibold text-surface-500 text-xs uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-surface-50">
                 {filtered.map((k, i) => (
-                  <tr key={k.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{k.nama_kelas}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-block text-xs font-medium bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">{k.tingkat}</span>
+                  <tr key={k.id} className="group hover:bg-surface-50/80 transition-colors">
+                    <td className="px-5 py-3.5 text-surface-400 text-xs">{i + 1}</td>
+                    <td className="px-5 py-3.5">
+                      <p className="font-medium text-surface-900">{k.nama_kelas}</p>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{k.jurusan ?? '-'}</td>
-                    <td className="px-4 py-3 text-gray-500">{k.tahun_ajaran}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openEdit(k)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => setDeleteId(k.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                    <td className="px-5 py-3.5">
+                      <span className={`badge ${tingkatColors[k.tingkat] ?? 'bg-surface-100 text-surface-700'}`}>
+                        {k.tingkat}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-surface-500">{k.jurusan ?? '-'}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="font-mono text-xs text-surface-600">{k.tahun_ajaran}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEdit(k)} className="btn-ghost p-2 rounded-lg" title="Edit">
+                          <Pencil className="w-3.5 h-3.5 text-brand-600" />
+                        </button>
+                        <button onClick={() => setDeleteId(k.id)} className="btn-ghost p-2 rounded-lg" title="Hapus">
+                          <Trash2 className="w-3.5 h-3.5 text-danger-500" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -157,15 +194,25 @@ export default function KelolaKelas() {
         )}
       </div>
 
+      {/* Modal */}
       <Modal open={modalOpen} title={editItem ? 'Edit Kelas' : 'Tambah Kelas Baru'} onClose={() => setModalOpen(false)}>
-        <div className="space-y-4">
-          {inp('nama_kelas', 'Nama Kelas', 'Contoh: X IPA 1')}
-          {sel('tingkat', 'Tingkat', ['X', 'XI', 'XII'])}
-          {inp('jurusan', 'Jurusan (Opsional)', 'Contoh: IPA, IPS, RPL')}
-          {inp('tahun_ajaran', 'Tahun Ajaran', 'Contoh: 2024/2025')}
-          <div className="flex gap-3 pt-2">
-            <button onClick={() => setModalOpen(false)} className="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Batal</button>
-            <button onClick={handleSave} disabled={saving} className="flex-1 py-2 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+        <div className="space-y-5">
+          <div className="space-y-4">
+            <p className="text-xs font-semibold text-surface-400 uppercase tracking-wider">Informasi Kelas</p>
+            <Field label="Nama Kelas" name="nama_kelas" placeholder="Contoh: X IPA 1" />
+            <Field label="Tingkat" name="tingkat" isSelect options={['X', 'XI', 'XII']} />
+            <Field label="Jurusan (Opsional)" name="jurusan" placeholder="Contoh: IPA, IPS, RPL" />
+            <Field label="Tahun Ajaran" name="tahun_ajaran" placeholder="Contoh: 2024/2025" />
+          </div>
+          <div className="flex gap-3 pt-3 border-t border-surface-100">
+            <button onClick={() => setModalOpen(false)} className="btn-secondary flex-1 py-2.5">
+              Batal
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="btn-primary flex-1 py-2.5"
+            >
               {saving && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
@@ -173,7 +220,7 @@ export default function KelolaKelas() {
         </div>
       </Modal>
 
-      <ConfirmDialog open={!!deleteId} title="Hapus Kelas" message="Apakah Anda yakin ingin menghapus kelas ini?" onConfirm={handleDelete} onCancel={() => setDeleteId(null)} loading={deleting} />
+      <ConfirmDialog open={!!deleteId} title="Hapus Kelas" message="Apakah Anda yakin ingin menghapus kelas ini? Tindakan ini tidak dapat dibatalkan." onConfirm={handleDelete} onCancel={() => setDeleteId(null)} loading={deleting} />
     </Layout>
   );
 }
